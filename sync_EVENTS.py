@@ -7,7 +7,6 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 def get_airtable_records():
-    # Load Airtable data
     airtable_api_key = os.getenv('AIRTABLE_API_KEY')
     airtable_base_id = os.getenv('AIRTABLE_BASE_ID')
     airtable_table_name = os.getenv('AIRTABLE_TABLE_NAME')
@@ -19,7 +18,7 @@ def get_airtable_records():
     headers = {"Authorization": f"Bearer {airtable_api_key}"}
 
     response = requests.get(url, headers=headers)
-    response.raise_for_status()  # Raise an exception for bad status codes
+    response.raise_for_status()
     return response.json().get('records', [])
 
 def filter_current_month_events(records):
@@ -29,9 +28,8 @@ def filter_current_month_events(records):
     for record in records:
         next_billing_date = record['fields'].get('Next Billing Date')
         if next_billing_date:
-            # Handle case where next_billing_date might be a list
             if isinstance(next_billing_date, list):
-                next_billing_date = next_billing_date[0]  # Take the first date if it's a list
+                next_billing_date = next_billing_date[0]
             
             try:
                 next_billing_date_obj = datetime.strptime(next_billing_date, "%Y-%m-%d")
@@ -44,21 +42,20 @@ def filter_current_month_events(records):
     return due_events
 
 def setup_google_calendar():
-    service_account_key_json = os.getenv('SERVICE_ACCOUNT_KEY_JSON')
-    if not service_account_key_json:
-        raise ValueError("Missing SERVICE_ACCOUNT_KEY_JSON environment variable")
+    credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+    if not credentials_path or not os.path.exists(credentials_path):
+        raise ValueError(f"Google credentials file not found at {credentials_path}")
 
     try:
-        credentials = service_account.Credentials.from_service_account_info(
-            json.loads(service_account_key_json),
+        credentials = service_account.Credentials.from_service_account_file(
+            credentials_path,
             scopes=["https://www.googleapis.com/auth/calendar"]
         )
         return build('calendar', 'v3', credentials=credentials)
-    except (exceptions.DefaultCredentialsError, json.JSONDecodeError) as e:
+    except Exception as e:
         raise ValueError(f"Error setting up Google Calendar: {e}")
 
 def create_google_calendar_event(service, event_details):
-    # Handle case where Next Billing Date might be a list
     billing_date = event_details['Next Billing Date']
     if isinstance(billing_date, list):
         billing_date = billing_date[0]
@@ -83,6 +80,8 @@ def create_google_calendar_event(service, event_details):
 
 def main():
     try:
+        print("Starting event sync process...")
+        
         # Get records from Airtable
         records = get_airtable_records()
         print(f"Retrieved {len(records)} records from Airtable")
@@ -93,6 +92,7 @@ def main():
 
         # Setup Google Calendar
         service = setup_google_calendar()
+        print("Successfully connected to Google Calendar")
 
         # Create events in Google Calendar
         for event in due_events:
@@ -101,6 +101,8 @@ def main():
                 "Next Billing Date": event['fields'].get('Next Billing Date')
             }
             create_google_calendar_event(service, event_details)
+
+        print("Event sync completed successfully")
 
     except Exception as e:
         print(f"Error in main execution: {e}")
