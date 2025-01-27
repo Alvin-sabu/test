@@ -101,7 +101,7 @@ def main():
         print(f"Retrieved {len(records)} records from Airtable")
 
         # Filter events for current month
-        due_events = filter_current_month_events(records)
+        due_events = filter_current_and_next_month_events(records)
         print(f"Found {len(due_events)} events for current month")
 
         # Setup Google Calendar
