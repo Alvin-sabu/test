@@ -100,7 +100,6 @@ def filter_due_events(records):
     current_month = current_date.month
     current_year = current_date.year
     
-    # Calculate next month and year
     next_month = current_month + 1 if current_month < 12 else 1
     next_month_year = current_year if current_month < 12 else current_year + 1
     
@@ -108,15 +107,20 @@ def filter_due_events(records):
         if 'Next Billing Date' in record['fields']:
             try:
                 next_billing_date = record['fields']['Next Billing Date']
+                # Handle list type dates from Airtable
+                if isinstance(next_billing_date, list):
+                    next_billing_date = next_billing_date[0]
+                if not isinstance(next_billing_date, str):
+                    continue
+                    
                 next_billing_date_obj = datetime.strptime(next_billing_date, "%Y-%m-%d")
                 
-                # Check if event is due in current or next month
                 if (next_billing_date_obj.month == current_month and 
                     next_billing_date_obj.year == current_year) or \
                    (next_billing_date_obj.month == next_month and 
                     next_billing_date_obj.year == next_month_year):
                     due_events.append(record)
-            except ValueError as e:
+            except (ValueError, TypeError) as e:
                 print(f"Error parsing date {next_billing_date}: {e}")
                 continue
     
