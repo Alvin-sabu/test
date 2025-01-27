@@ -93,6 +93,35 @@ def create_google_calendar_event(service, event_details):
     except HttpError as error:
         print(f"Error creating event: {error}")
         return None
+def filter_due_events(records):
+    """Filter events due in current or next month."""
+    due_events = []
+    current_date = datetime.now()
+    current_month = current_date.month
+    current_year = current_date.year
+    
+    # Calculate next month and year
+    next_month = current_month + 1 if current_month < 12 else 1
+    next_month_year = current_year if current_month < 12 else current_year + 1
+    
+    for record in records:
+        if 'Next Billing Date' in record['fields']:
+            try:
+                next_billing_date = record['fields']['Next Billing Date']
+                next_billing_date_obj = datetime.strptime(next_billing_date, "%Y-%m-%d")
+                
+                # Check if event is due in current or next month
+                if (next_billing_date_obj.month == current_month and 
+                    next_billing_date_obj.year == current_year) or \
+                   (next_billing_date_obj.month == next_month and 
+                    next_billing_date_obj.year == next_month_year):
+                    due_events.append(record)
+            except ValueError as e:
+                print(f"Error parsing date {next_billing_date}: {e}")
+                continue
+    
+    print(f"Found {len(due_events)} events for current/next month")
+    return due_events
 
 def main():
     try:
