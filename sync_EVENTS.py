@@ -87,7 +87,7 @@ def create_google_calendar_event(service, event_details):
     }
     
     try:
-        created_event = service.events().insert(calendarId='primary', body=event).execute()
+        created_event = service.events().insert(calendarId='ac4ed193aee8a328e8a8695bff4e15db93ea77ecead6d910caced7fb28b6d55e@group.calendar.google.com', body=event).execute()
         print(f"Event created: {created_event.get('summary')}")
     except Exception as e:
         print(f"Error creating event {event_details['Title']}: {e}")
