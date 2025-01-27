@@ -21,8 +21,19 @@ def get_airtable_records():
     response.raise_for_status()
     return response.json().get('records', [])
 
-def filter_current_month_events(records):
+def filter_current_and_next_month_events(records):
     current_date = datetime.now()
+    current_month = current_date.month
+    current_year = current_date.year
+
+    # Calculate the next month and handle year rollover
+    if current_month == 12:
+        next_month = 1
+        next_month_year = current_year + 1
+    else:
+        next_month = current_month + 1
+        next_month_year = current_year
+
     due_events = []
 
     for record in records:
@@ -30,10 +41,13 @@ def filter_current_month_events(records):
         if next_billing_date:
             if isinstance(next_billing_date, list):
                 next_billing_date = next_billing_date[0]
-            
+
             try:
                 next_billing_date_obj = datetime.strptime(next_billing_date, "%Y-%m-%d")
-                if next_billing_date_obj.month == current_date.month and next_billing_date_obj.year == current_date.year:
+                
+                # Check if the event is due in the current month or next month
+                if (next_billing_date_obj.month == current_month and next_billing_date_obj.year == current_year) or \
+                   (next_billing_date_obj.month == next_month and next_billing_date_obj.year == next_month_year):
                     due_events.append(record)
             except ValueError as e:
                 print(f"Error parsing date {next_billing_date}: {e}")
