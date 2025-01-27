@@ -31,10 +31,10 @@ jobs:
       # Step 4: Set up environment variables
       - name: Set up environment variables
         run: |
-          echo "AIRTABLE_API_KEY=${{ secrets.AIRTABLE_API_KEY }}" >> $GITHUB_ENV
-          echo "AIRTABLE_BASE_ID=${{ secrets.AIRTABLE_BASE_ID }}" >> $GITHUB_ENV
-          echo "AIRTABLE_TABLE_NAME=${{ secrets.AIRTABLE_TABLE_NAME }}" >> $GITHUB_ENV
-          echo "SERVICE_ACCOUNT_KEY_JSON=${{ secrets.SERVICE_ACCOUNT_KEY_JSON }}" >> $GITHUB_ENV
+          printf "AIRTABLE_API_KEY=%s\n" "${{ secrets.AIRTABLE_API_KEY }}" >> $GITHUB_ENV
+          printf "AIRTABLE_BASE_ID=%s\n" "${{ secrets.AIRTABLE_BASE_ID }}" >> $GITHUB_ENV
+          printf "AIRTABLE_TABLE_NAME=%s\n" "${{ secrets.AIRTABLE_TABLE_NAME }}" >> $GITHUB_ENV
+          printf "SERVICE_ACCOUNT_KEY_JSON=%s\n" "${{ secrets.SERVICE_ACCOUNT_KEY_JSON }}" >> $GITHUB_ENV
 
       # Step 5: Run the notify script
       - name: Run the notify script
