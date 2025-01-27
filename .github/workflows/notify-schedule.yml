@@ -36,9 +36,7 @@ jobs:
           echo "AIRTABLE_TABLE_NAME=${{ secrets.AIRTABLE_TABLE_NAME }}" >> $GITHUB_ENV
           echo "SERVICE_ACCOUNT_KEY_JSON=${{ secrets.SERVICE_ACCOUNT_KEY_JSON }}" >> $GITHUB_ENV
 
-
       # Step 5: Run the notify script
       - name: Run the notify script
         run: |
           python your_script.py  # Replace with the actual script name
-
