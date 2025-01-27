@@ -2,6 +2,7 @@ import os
 import requests
 import json
 from datetime import datetime
+from googleapiclient.errors import HttpError
 from google.auth import exceptions
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
