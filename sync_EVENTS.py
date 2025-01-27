@@ -70,54 +70,55 @@ def setup_google_calendar():
         raise ValueError(f"Error setting up Google Calendar: {e}")
 
 def create_google_calendar_event(service, event_details):
-    billing_date = event_details['Next Billing Date']
-    if isinstance(billing_date, list):
-        billing_date = billing_date[0]
-
-    event = {
-        'summary': event_details['Title'],
-        'start': {
-            'dateTime': f"{billing_date}T09:00:00",
-            'timeZone': 'UTC',
-        },
-        'end': {
-            'dateTime': f"{billing_date}T09:30:00",
-            'timeZone': 'UTC',
-        },
-    }
-    
     try:
-        created_event = service.events().insert(calendarId='ac4ed193aee8a328e8a8695bff4e15db93ea77ecead6d910caced7fb28b6d55e@group.calendar.google.com', body=event).execute()
-        print(f"Event created: {created_event.get('summary')}")
-    except Exception as e:
-        print(f"Error creating event {event_details['Title']}: {e}")
+        calendar_id = 'primary'  # Using primary calendar
+        
+        event = {
+            'summary': event_details['summary'],
+            'description': event_details.get('description', ''),
+            'start': {
+                'dateTime': event_details['start'],
+                'timeZone': 'UTC',
+            },
+            'end': {
+                'dateTime': event_details['end'],
+                'timeZone': 'UTC',
+            }
+        }
+        
+        result = service.events().insert(calendarId=calendar_id, body=event).execute()
+        print(f"Successfully created event: {event_details['summary']}")
+        return result
+    
+    except HttpError as error:
+        print(f"Error creating event: {error}")
+        return None
 
 def main():
     try:
         print("Starting event sync process...")
-        
-        # Get records from Airtable
-        records = get_airtable_records()
-        print(f"Retrieved {len(records)} records from Airtable")
-
-        # Filter events for current month
-        due_events = filter_current_and_next_month_events(records)
-        print(f"Found {len(due_events)} events for current month")
-
-        # Setup Google Calendar
         service = setup_google_calendar()
-        print("Successfully connected to Google Calendar")
-
-        # Create events in Google Calendar
-        for event in due_events:
+        records = get_airtable_records()
+        filtered_records = filter_due_events(records)
+        
+        successful_events = 0
+        failed_events = 0
+        
+        for record in filtered_records:
             event_details = {
-                "Title": event['fields'].get('Title', 'Untitled Event'),
-                "Next Billing Date": event['fields'].get('Next Billing Date')
+                'summary': record['fields'].get('Name', 'Untitled Event'),
+                'start': record['fields'].get('Start'),
+                'end': record['fields'].get('End'),
+                'description': record['fields'].get('Description', '')
             }
-            create_google_calendar_event(service, event_details)
-
-        print("Event sync completed successfully")
-
+            
+            if create_google_calendar_event(service, event_details):
+                successful_events += 1
+            else:
+                failed_events += 1
+        
+        print(f"Sync completed. Success: {successful_events}, Failed: {failed_events}")
+        
     except Exception as e:
         print(f"Error in main execution: {e}")
         raise
